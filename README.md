@@ -1,7 +1,9 @@
 TwitterFreeUsernameChecker
 ==========================
 
-Tool to check if Twitter usernames are available
+Tool to check if Twitter usernames are available.
+
+
 The idea is to cron a script that simply check if usernames exist and email you when they don't anymore.
 Hopefully, I'll get some luck :)
 
