@@ -1,0 +1,8 @@
+{
+  "name": "twitter-free-username-checker",
+  "version": "0.0.1",
+  "engines": {
+    "node": "0.8.7",
+    "npm": "1.1.49"
+  }
+}
