@@ -38,8 +38,8 @@ function checkIfUsernamesExist(usernames, callback) {
 
 function sendEmail(subject, text) {
   sendgrid.send({
-    to: process.env.TWITTERFREEUSERNAMECHECKER_EMAIL,
-    from: process.env.TWITTERFREEUSERNAMECHECKER_EMAIL,
+    to: process.env.TFUNC_EMAIL,
+    from: process.env.TFUNC_EMAIL,
     subject: subject,
     text: text
   }, function(success, err) {
@@ -60,7 +60,7 @@ function sendFreeUsernamesEmail(freeUsernames) {
   sendEmail(APP_NAME + " - Free Usernames", text)
 }
 
-checkIfUsernamesExist(["mv", "michael", "m", "michaelv", "proutpmichael"], function(unexistingUsernames, err) {
+checkIfUsernamesExist(process.env.TFUNC_USERNAMES.split(","), function(unexistingUsernames, err) {
   if(err)
     sendErrEmail(err)
   else if(unexistingUsernames.length > 0)
