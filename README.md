@@ -14,6 +14,7 @@ To deploy on heroku
 - schedule a cron : heroku addons:open scheduler
 - schedule using task = checker.js
 - heroku config:add TFUNC_EMAIL='youremail@example.com'
+- heroku config:add TFUNC_USERNAMES='usernames,you,want,to,check'
 - heroku config:add TFUNC_TWITTER_CONSUMER_KEY='App consumer key'
 - heroku config:add TFUNC_TWITTER_CONSUMER_SECRET='App consumer secret'
 - git push heroku master
