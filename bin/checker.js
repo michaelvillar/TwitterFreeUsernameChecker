@@ -1,6 +1,8 @@
 #!/app/bin/node
 
 var http = require('http')
+var https = require('https')
+var querystring = require('querystring')
 var SendGrid = require('sendgrid').SendGrid
 var sendgrid = new SendGrid(
   process.env.SENDGRID_USERNAME,
@@ -9,30 +11,83 @@ var sendgrid = new SendGrid(
 
 var APP_NAME = "TwitterFreeUsernameChecker"
 
-function checkIfUsernamesExist(usernames, callback) {
-  var url = "http://api.twitter.com/1/users/lookup.json?screen_name=";
-  url += usernames.join(",")
-  http.get(url, function(res) {
-    var data = ""
-    res.on("data", function(chunk) {
+function auth(callback) {
+  var auth = process.env.TFUNC_TWITTER_CONSUMER_KEY + ':' + process.env.TFUNC_TWITTER_CONSUMER_SECRET;
+  var auth64 = new Buffer(auth).toString('base64');
+
+  var post_data = querystring.stringify({
+    'grant_type' : 'client_credentials'
+  });
+
+  var post_options = {
+    host: 'api.twitter.com',
+    port: '443',
+    path: '/oauth2/token',
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + auth64,
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      'Content-Length': post_data.length
+    }
+  };
+
+  var post_req = https.request(post_options, function(res) {
+    res.setEncoding('utf8');
+    var data = ''
+    res.on('data', function (chunk) {
       data += chunk
     });
-    res.on("end", function() {
+    res.on('end', function() {
       try {
         var json = JSON.parse(data)
-        json.forEach(function(user) {
-          var screenName = user['screen_name'].toLowerCase()
-          var pos = usernames.indexOf(screenName)
-          if(pos != -1)
-            usernames.splice(pos, 1)
-        })
-        callback(usernames)
+        callback(json.access_token)
       } catch(e) {
-        callback([], e)
       }
     })
-  }).on('error', function(e) {
-    callback([], e)
+    res.on('error', function(e) {
+      console.log('Error' , e)
+    })
+  });
+  post_req.write(post_data);
+  post_req.end();
+}
+
+function checkIfUsernamesExist(usernames, callback) {
+  auth(function(access_token) {
+    var get_options = {
+      host: 'api.twitter.com',
+      port: '443',
+      path: '/1.1/users/lookup.json?screen_name=' + usernames.join(","),
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      }
+    };
+
+    var get_req = https.request(get_options, function(res) {
+      var data = ""
+      res.on("data", function(chunk) {
+        data += chunk
+      });
+      res.on("end", function() {
+        try {
+          var json = JSON.parse(data)
+          json.forEach(function(user) {
+            var screenName = user['screen_name'].toLowerCase()
+            var pos = usernames.indexOf(screenName)
+            if(pos != -1)
+              usernames.splice(pos, 1)
+          })
+          callback(usernames)
+        } catch(e) {
+          callback([], e)
+        }
+      })
+      res.on('error', function(e) {
+        console.log('Error' , e)
+      })
+    })
+    get_req.end();
   })
 }
 
